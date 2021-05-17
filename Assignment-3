@@ -1,25 +1,25 @@
 //Home Automation//
-#include “DHT.h”
+#include <DHT.h>
 #include <Wire.h>
 #include <Adafruit_GFX.h>
 #include <Adafruit_SSD1306.h>
 #define DHTPIN 4      
 #define DHTTYPE DHT11    
 DHT dht(DHTPIN, DHTTYPE);
-
 #define SCREEN_WIDTH 128 // Display Width of OLED
 #define SCREEN_HEIGHT 64 // Display Height of OLED
 Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, -1);
 void setup()
  {
   Serial.begin(9600);
-  Serial.println(F(“DHTxx test!”));
-   Dht.begin();
+  Serial.println(F("DHTxx test!"));
+   dht.begin();
      Serial.begin(115200);
 delay(1000);
-Serial.println(“oled testing”);
-  If(!display.begin(SSD1306_SWITCHCAPVCC, 0x3C)) { 
-    Serial.println(“SSD1306 allocation failed”);
+Serial.println("oled testing");
+  if(!display.begin(SSD1306_SWITCHCAPVCC, 0x3C))
+  { 
+    Serial.println("SSD1306 allocation failed");
     for(;;);}
       delay(2000);
   display.clearDisplay();
@@ -44,7 +44,7 @@ void loop() {
 
  
   if (isnan(h) || isnan(t) || isnan(f)) {
-    Serial.println(F(“Failed to read from DHT sensor!”));
+    Serial.println(F("Failed to read from DHT sensor!"));
     return;
   }
  
@@ -70,27 +70,27 @@ delay(2000);
  display.print(F("C"));
 display.print(hif);
   display.println(F("F"));
-  display.println("ldr value is:”);
- display.println(a);
- 
-  If(a<=2500)
+  display.println("ldr value is:");
+ display.println(a); 
+  if(a<=2500)
 {
 digitalWrite(2,HIGH);
-    display.println(“LIGHTS ARE ON”);
+    display.println("LIGHTS ARE ON");
 }
-Else
+else
 {
    digitalWrite(2,LOW);
-   display.println("LIGHTS ARE OFF”);
+   display.println("LIGHTS ARE OFF");
 } 
-If(f>28)
+if(f>28)
 {
   digitalWrite(13,HIGH);
-  display.println(“FANS ARE ON”);
+  display.println("FANS ARE ON");
   
 }
-else{
+else
+{
   digitalWrite(13,LOW);
-  display.println(“FAN ARE OFF”);
+  display.println("FANS ARE OFF");
 }
 }
