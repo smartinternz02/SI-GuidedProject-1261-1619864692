@@ -1,0 +1,73 @@
+//Smart Water Tank Controller//
+#include "BluetoothSerial.h"
+BluetoothSerial SerialBT;
+int motor=2;  
+char incoming_BT_value =0;
+int trigpin=5;
+int echopin=4;
+void setup() 
+{
+   Serial.println("data");
+   SerialBT.begin("ESP32");
+   Serial.println("Device is connected pair with bluetooth");
+   pinMode(motor, OUTPUT);
+   Serial.begin(115200);
+   pinMode(trigpin,OUTPUT);
+   pinMode(echopin,INPUT);
+   delay(1000); 
+}
+void loop() 
+{
+  if(Serial.available())
+    {
+    SerialBT.write(Serial.read());
+  }
+  if(SerialBT.available())
+  {
+    SerialBT.write(SerialBT.read());
+  }
+ digitalWrite(trigpin,HIGH);
+ delay(1000);
+ digitalWrite(trigpin,LOW);
+int duration=pulseIn(echopin,HIGH);
+int distance=duration*0.343/2; 
+ Serial.println("the distance is");
+ Serial.print(distance);
+ char incoming_value=1;
+     if(SerialBT.available()==1)
+     {  
+       incoming_value=SerialBT.read(); 
+ if(distance<100)
+ {
+      SerialBT.print("Level of water pump is: ");
+ SerialBT.println(distance);
+ delay(2000);
+   SerialBT.println("Tank is full");
+   delay(1000);
+      SerialBT.println("OVERFLOW TURNOFF MOTOR");
+    delay(1000); 
+ }
+  else if(distance>=100)
+ {
+   SerialBT.println("Level of water pump is:");
+ SerialBT.print(distance);
+ delay(2000);
+  SerialBT.println("LOW Water Level"); 
+  delay(1000);
+  SerialBT.println("UNDERFLOW TURNON MOTOR");
+  delay(1000);
+}
+     }
+     if(SerialBT.available()>0){
+       incoming_BT_value=SerialBT.read(); 
+     }
+        if(incoming_BT_value=='1')
+        {
+          digitalWrite(motor,HIGH);
+      }
+    else if(incoming_BT_value=='0')
+    {
+      digitalWrite(motor,LOW);
+      }
+
+}
