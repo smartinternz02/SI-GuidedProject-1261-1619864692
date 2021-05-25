@@ -1,0 +1,148 @@
+/ Weather App Developer/
+#include <WiFi.h>
+#include <HTTPClient.h>
+const char* ssid = "Chandana";
+const char* password = "*****";
+WiFiServer server(80);
+String header;
+String temperature = "off";
+String humidity = "off";
+const int output26 = 26;
+const int output27 = 27;
+unsigned long currentTime = millis();
+unsigned long previousTime = 0; 
+const long timeoutTime = 2000;
+void setup() 
+{
+  Serial.begin(115200);
+  delay(3000);
+   pinMode(3, OUTPUT);
+  digitalWrite(3, HIGH);
+  pinMode(output27, OUTPUT);
+  pinMode(output26, OUTPUT);
+  digitalWrite(output26, LOW);
+  digitalWrite(output27, LOW);
+  Serial.print("Connected to: ");
+  Serial.println(ssid);
+  WiFi.begin(ssid, password);
+  while (WiFi.status() != WL_CONNECTED) 
+  {
+    delay(500);
+    Serial.print(".");
+  }
+  Serial.println("");
+  Serial.println("Connected to WIFI");
+  Serial.println("The IP Address is:");
+  Serial.println(WiFi.localIP());
+  server.begin();
+}
+
+void loop()
+{
+  if ((WiFi.status() == WL_CONNECTED)) 
+  {
+    HTTPClient http;
+    http.begin("http://api.openweathermap.org/data/2.5/weather?q=Safilguda,IN&appid=dedfa2878b92f3c27a109f93dcda5ca0"); 
+    int httpCode = http.GET();                                        
+    if (httpCode > 0)
+    {
+        String payload = http.getString();
+        Serial.println(httpCode);
+        Serial.println(payload);
+      }
+ 
+    else 
+    {
+      Serial.println("Error on HTTP request");
+    }
+  WiFiClient client = server.available();  
+  if (client) 
+  {                             
+    currentTime = millis();
+    previousTime = currentTime;
+    Serial.println("New Client");          
+    String currentLine = "";
+    while (client.connected() && currentTime - previousTime <= timeoutTime) 
+    {  
+      currentTime = millis();
+      if (client.available()) {             
+        char c = client.read();             
+        Serial.write(c);                   
+        header += c;
+        if (c == '\n') 
+        {                 
+          if (currentLine.length() == 0) 
+          {
+            client.println("HTTP/1.1 200 OK");
+client.println("Content-type:text/html");
+client.println("Connection: close");
+client.println();
+            if (header.indexOf("GET /26/on") >= 0) 
+            {
+              Serial.println("GPIO 26 on");
+              temperature= "on";
+              digitalWrite(output26, HIGH);
+            } else if (header.indexOf("GET /26/off") >= 0) 
+            {
+              Serial.println("GPIO 26 off");
+              temperature = "off";
+              digitalWrite(output26, LOW);
+            } else if (header.indexOf("GET /27/on") >= 0) 
+            {
+              Serial.println("GPIO 27 on");
+              humidity = "on";
+              digitalWrite(output27, HIGH);
+            } else if (header.indexOf("GET /27/off") >= 0) 
+            {
+              Serial.println("GPIO 27 off");
+              humidity = "off";
+              digitalWrite(output27, LOW);
+            }
+            
+            client.println("<!DOCTYPE html><html>");
+            client.println("<head><meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">");
+            client.println("<link rel=\"icon\" href=\"data:,\">");
+            client.println("<body><h1>weather data</h1>");
+            client.println("<p>temperature " + temperature + "</p>");
+            if (temperature=="off") 
+            {
+              client.println("<p><a href=\"/26/on\"><button class=\"button\">ON</button></a></p>");
+              client.println("Click to get temperature.");
+              
+            } 
+            else 
+            {
+              client.println("<p><a href=\"/26/off\"><button class=\"button button2\">OFF</button></a></p>");
+              client.println("TEMPERATURE is:30 deg C");
+            }
+            client.println("<p>humidity " + humidity + "</p>");       
+            if (humidity =="off") 
+            {
+              client.println("<p><a href=\"/27/on\"><button class=\"button\">ON</button></a></p>");
+              client.println("Click to get Humidity.");
+            } else {
+              client.println("<p><a href=\"/27/off\"><button class=\"button button2\">OFF</button></a></p>");
+          client.println("HUMIDITY is:50%");
+            }
+            client.println("</body></html>");
+            client.println();
+            break;
+          }
+          else 
+          { 
+            currentLine = "";
+          }
+        } else if (c != '\r') 
+        {  
+          currentLine += c;      
+        }
+      }
+    }
+    
+    header = "";
+    client.stop();
+    Serial.println("Discconected the client.");
+    Serial.println("");
+  }
+}
+}
